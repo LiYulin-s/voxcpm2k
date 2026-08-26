@@ -43,11 +43,13 @@ jobs:
           ./gradlew \
             jvmTest jvmJar linuxX64Test linuxX64RuntimeZip \
             :gradle-plugin:test :gradle-plugin:validatePlugins \
+            :example:desktopJar \
             --configuration-cache \
             -Pvoxcpm2.xmake.toolchain=clang
           ./gradlew \
             jvmTest jvmJar linuxX64Test linuxX64RuntimeZip \
             :gradle-plugin:test :gradle-plugin:validatePlugins \
+            :example:desktopJar \
             --configuration-cache \
             -Pvoxcpm2.xmake.toolchain=clang
       - name: Inspect Linux runtime artifacts
@@ -83,11 +85,11 @@ jobs:
         run: |
           sdkmanager "platforms;android-36" "ndk;29.0.14206865"
           yes | sdkmanager --licenses >/dev/null || true
-      - name: Build Android binding
+      - name: Build Android binding and example app
         run: |
-          ./gradlew assembleAndroidMain testAndroidHostTest --configuration-cache
-          ./gradlew assembleAndroidMain testAndroidHostTest --configuration-cache
-      - name: Inspect Android AAR
+          ./gradlew assembleAndroidMain testAndroidHostTest :example-app:assembleDebug --configuration-cache
+          ./gradlew assembleAndroidMain testAndroidHostTest :example-app:assembleDebug --configuration-cache
+      - name: Inspect Android AAR and example APK
         run: |
           aar=$(find build/outputs -name '*.aar' -print -quit)
           test -n "$aar"
@@ -95,6 +97,11 @@ jobs:
             unzip -Z1 "$aar" | grep -qx "jni/arm64-v8a/$library"
           done
           test "$(unzip -Z1 "$aar" | grep -c '^jni/arm64-v8a/.*\.so$')" -eq 3
+          apk=$(find example-app/build/outputs/apk -name '*.apk' -print -quit)
+          test -n "$apk"
+          for library in libvoxcpm2_ncnn.so libvoxcpm2_jni.so libc++_shared.so; do
+            unzip -Z1 "$apk" | grep -qx "lib/arm64-v8a/$library"
+          done
 
   apple:
     runs-on: macos-26

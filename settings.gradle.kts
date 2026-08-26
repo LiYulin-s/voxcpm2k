@@ -24,3 +24,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "voxcpm2k"
 include(":gradle-plugin")
+include(":example")
+include(":example-app")

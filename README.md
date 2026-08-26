@@ -113,6 +113,28 @@ Prompt and reference audio must be non-empty mono float PCM at
 `synthesizer.inputSampleRate`. Generated audio is mono float PCM at
 `synthesizer.outputSampleRate`.
 
+## Example app
+
+A Compose Multiplatform example lives in `example/` (shared UI and state) plus
+`example-app/` (the Android entry point). It loads a model directory, streams
+load and synthesis progress, cancels through the native operation token, plays
+the generated PCM, and exports a 16-bit WAV:
+
+```sh
+# Desktop (Linux x64)
+./gradlew :example:run
+
+# Android
+./gradlew :example-app:assembleDebug
+adb install example-app/build/outputs/apk/debug/example-app-debug.apk
+```
+
+The model is never bundled. Export it once with the submodule
+`tools/export_*.py` scripts and point the app at a real filesystem path. On
+Android, push the directory somewhere the app can read (for example
+`/sdcard/Download/voxcpm2-model`) and type that path into the field; WAV
+exports are written to the app's external files directory shown after saving.
+
 ## Artifacts
 
 | Coordinate | Contents |
