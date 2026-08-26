@@ -1,0 +1,3 @@
+[submodule "native/voxcpm2-ncnn"]
+	path = native/voxcpm2-ncnn
+	url = https://github.com/LiYulin-s/voxcpm2-ncnn.git

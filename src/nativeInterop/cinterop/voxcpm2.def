@@ -1,0 +1,4 @@
+headers = voxcpm2/c_api.h
+headerFilter = voxcpm2/c_api.h
+package = top.yurin.voxcpm2.internal.cinterop
+nonStrictEnums = voxcpm2_status voxcpm2_progress_phase
