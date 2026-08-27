@@ -39,6 +39,9 @@ actual class AudioPlayer {
 
 actual fun defaultOutputDirectory(): String = System.getProperty("user.home") ?: "."
 
+actual fun defaultModelDirectory(): String =
+    File(System.getProperty("user.home") ?: ".", ".voxcpm2k/models/voxcpm2").absolutePath
+
 actual fun writeBytes(path: String, bytes: ByteArray) {
     File(path).writeBytes(bytes)
 }

@@ -14,5 +14,8 @@ expect class AudioPlayer {
 /** Directory the example writes exported WAV files into. */
 expect fun defaultOutputDirectory(): String
 
+/** Directory the auto-downloaded model assets live in. */
+expect fun defaultModelDirectory(): String
+
 /** Writes [bytes] to [path], creating or replacing the file. */
 expect fun writeBytes(path: String, bytes: ByteArray)

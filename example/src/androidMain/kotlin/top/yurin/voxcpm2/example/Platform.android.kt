@@ -15,6 +15,11 @@ actual fun defaultOutputDirectory(): String {
     return context.getExternalFilesDir(null)?.absolutePath ?: context.filesDir.absolutePath
 }
 
+actual fun defaultModelDirectory(): String {
+    val context = appContext ?: error("application context is not installed")
+    return File(context.filesDir, "models/voxcpm2").absolutePath
+}
+
 actual fun writeBytes(path: String, bytes: ByteArray) {
     File(path).writeBytes(bytes)
 }

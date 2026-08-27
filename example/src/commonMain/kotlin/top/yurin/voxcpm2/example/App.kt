@@ -84,13 +84,27 @@ fun App() {
             }
 
             when (val current = model.state) {
-                is UiState.Idle -> Button(
-                    onClick = { model.load(scope) },
-                    enabled = model.modelDirectory.isNotBlank(),
-                ) { Text("Load model") }
+                is UiState.Idle -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = { model.load(scope) },
+                        enabled = model.modelDirectory.isNotBlank(),
+                    ) { Text("Load model") }
+                    OutlinedButton(onClick = { model.downloadModel(scope) }) {
+                        Text("Download model (~4.9 GB)")
+                    }
+                    Text(
+                        "Downloads to ${defaultModelDirectory()}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
 
                 is UiState.Loading -> {
                     ProgressView(current.progress)
+                    OutlinedButton(onClick = { model.cancelActiveWork() }) { Text("Cancel") }
+                }
+
+                is UiState.Downloading -> {
+                    DownloadProgressView(current.progress)
                     OutlinedButton(onClick = { model.cancelActiveWork() }) { Text("Cancel") }
                 }
 
@@ -121,7 +135,12 @@ fun App() {
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    Button(onClick = { model.load(scope) }) { Text("Retry") }
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Button(onClick = { model.load(scope) }) { Text("Retry") }
+                        OutlinedButton(onClick = { model.downloadModel(scope) }) {
+                            Text("Download model (~4.9 GB)")
+                        }
+                    }
                 }
             }
         }
@@ -143,4 +162,34 @@ private fun ProgressView(progress: Progress?) {
             LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())
         }
     }
+}
+
+@Composable
+private fun DownloadProgressView(progress: DownloadProgress?) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (progress == null) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            Text("Contacting download source…")
+            return
+        }
+        Text("${progress.currentFile} — ${formatBytes(progress.bytesDone)} / ${formatBytes(progress.bytesTotal)}")
+        val fraction = progress.fraction
+        if (fraction == null) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        } else {
+            LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+
+private fun formatBytes(bytes: Long): String {
+    if (bytes < 1_000) {
+        return "$bytes B"
+    }
+    val megabytes = bytes / 1_000_000.0
+    if (megabytes < 1_000.0) {
+        return "${megabytes.toInt()} MB"
+    }
+    val gigabytes = megabytes / 1_000.0
+    return "${(gigabytes * 100).toInt() / 100.0} GB"
 }

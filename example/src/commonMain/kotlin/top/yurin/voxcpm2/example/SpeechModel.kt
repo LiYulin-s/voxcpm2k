@@ -22,6 +22,8 @@ sealed interface UiState {
 
     data class Loading(val progress: Progress?) : UiState
 
+    data class Downloading(val progress: DownloadProgress?) : UiState
+
     data object Ready : UiState
 
     data class Synthesizing(val progress: Progress?) : UiState
@@ -45,6 +47,7 @@ class SpeechModel {
     private var activeJob: Job? = null
     private var lastAudio: AudioBuffer? = null
     private val player = AudioPlayer()
+    private val downloader = ModelDownloader()
 
     private fun config(): VoxCPM2Config =
         VoxCPM2Config(
@@ -55,24 +58,47 @@ class SpeechModel {
 
     fun load(scope: CoroutineScope) {
         cancelActiveWork()
+        activeJob = scope.launch(Dispatchers.Default) { performLoad() }
+    }
+
+    /** Downloads the model into [defaultModelDirectory], then loads it automatically. */
+    fun downloadModel(scope: CoroutineScope) {
+        cancelActiveWork()
+        val targetDirectory = defaultModelDirectory()
         activeJob = scope.launch(Dispatchers.Default) {
-            state = UiState.Loading(null)
+            state = UiState.Downloading(null)
             try {
-                VoxCPM2.openEvents(config()).collect { event ->
-                    when (event) {
-                        is InitializationEvent.ProgressEvent -> state = UiState.Loading(event.progress)
-                        is InitializationEvent.Ready -> {
-                            synthesizer?.close()
-                            synthesizer = event.synthesizer
-                            state = UiState.Ready
-                        }
+                downloader.ensureModel(targetDirectory) { progress ->
+                    state = UiState.Downloading(progress)
+                }
+                modelDirectory = targetDirectory
+            } catch (cancelled: CancellationException) {
+                state = UiState.Idle
+            } catch (error: Exception) {
+                state = UiState.Failed(error.message ?: "model download failed")
+                return@launch
+            }
+            performLoad()
+        }
+    }
+
+    private suspend fun performLoad() {
+        state = UiState.Loading(null)
+        try {
+            VoxCPM2.openEvents(config()).collect { event ->
+                when (event) {
+                    is InitializationEvent.ProgressEvent -> state = UiState.Loading(event.progress)
+                    is InitializationEvent.Ready -> {
+                        synthesizer?.close()
+                        synthesizer = event.synthesizer
+                        state = UiState.Ready
                     }
                 }
-            } catch (cancelled: CancellationException) {
-                state = if (synthesizer == null) UiState.Idle else UiState.Ready
-            } catch (error: Exception) {
-                state = UiState.Failed(error.message ?: "model loading failed")
             }
+        } catch (cancelled: CancellationException) {
+            state = if (synthesizer == null) UiState.Idle else UiState.Ready
+        } catch (error: Exception) {
+            state = UiState.Failed(error.message ?: "model loading failed")
         }
     }
 

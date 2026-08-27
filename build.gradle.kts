@@ -38,6 +38,7 @@ plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.composeCompiler) apply false
+    alias(libs.plugins.kotlinSerialization) apply false
 }
 
 allprojects {

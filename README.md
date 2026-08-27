@@ -116,9 +116,9 @@ Prompt and reference audio must be non-empty mono float PCM at
 ## Example app
 
 A Compose Multiplatform example lives in `example/` (shared UI and state) plus
-`example-app/` (the Android entry point). It loads a model directory, streams
-load and synthesis progress, cancels through the native operation token, plays
-the generated PCM, and exports a 16-bit WAV:
+`example-app/` (the Android entry point). It downloads the model automatically,
+streams load and synthesis progress, cancels through the native operation
+token, plays the generated PCM, and exports a 16-bit WAV:
 
 ```sh
 # Desktop (Linux x64)
@@ -129,11 +129,21 @@ the generated PCM, and exports a 16-bit WAV:
 adb install example-app/build/outputs/apk/debug/example-app-debug.apk
 ```
 
-The model is never bundled. Export it once with the submodule
-`tools/export_*.py` scripts and point the app at a real filesystem path. On
-Android, push the directory somewhere the app can read (for example
-`/sdcard/Download/voxcpm2-model`) and type that path into the field; WAV
-exports are written to the app's external files directory shown after saving.
+Tap **Download model (~4.9 GB)** and the app fetches the prebuilt ncnn assets
+from HuggingFace into a local directory (Android internal storage,
+`~/.voxcpm2k` on Desktop), then loads them automatically. The file list is
+derived from the repository's own `model.json`, partial downloads resume, and
+already-complete files are skipped.
+
+The download source is selected automatically: a local Clash/v2ray-style
+proxy on ports 7890/7897/7891/2080 is detected and used when it can reach
+`huggingface.co`; otherwise both `huggingface.co` and `hf-mirror.com` are
+probed directly and the first reachable one wins. On networks where neither is
+reachable without a proxy, run a local proxy first or place a manually
+downloaded model (`huggingface-cli download lyrin/voxpm2-ncnn --local-dir
+<dir>`) somewhere the app can read and point the model directory field at it.
+WAV exports are written to the app's external files directory shown after
+saving.
 
 ## Artifacts
 
